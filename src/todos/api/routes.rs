@@ -8,7 +8,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
-    routing::get,
+    routing::{get, post},
     Json, Router,
 };
 use chrono::Utc;
@@ -25,6 +25,7 @@ pub(crate) fn router() -> Router {
     Router::new()
         .route("/todos", get(get_todos).post(add_todo))
         .route("/todos/:todo_id", get(get_todo).patch(update_todo))
+        .route("/todos/:todo_id/actions/complete", post(complete_todo))
         .with_state(Arc::clone(&shared_repository))
 }
 
@@ -92,6 +93,29 @@ async fn update_todo(
     if let Some(title) = patch.title {
         todo = data::models::Todo { title, ..todo };
     }
+
+    repository.write().await.update_todo(todo).await;
+
+    Ok(())
+}
+
+async fn complete_todo(
+    State(repository): State<SharedRepository>,
+    Path(todo_id): Path<String>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let mut todo = repository
+        .read()
+        .await
+        .get_todo(todo_id)
+        .await
+        .ok_or(StatusCode::NOT_FOUND)?
+        .clone();
+
+    todo = data::models::Todo {
+        is_complete: true,
+        completed_at: Some(Utc::now()),
+        ..todo
+    };
 
     repository.write().await.update_todo(todo).await;
 
