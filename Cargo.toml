@@ -10,4 +10,5 @@ axum = "0.6.20"
 chrono = { version = "0.4.31", features = ["serde", "clock"] }
 serde = { version = "1.0.189", features = ["derive"] }
 tokio = { version = "1.33.0", features = ["full"] }
+tokio-test = "0.4.3"
 uuid = { version = "1.4.1", features = ["serde", "v4"] }
