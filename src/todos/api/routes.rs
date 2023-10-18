@@ -35,18 +35,21 @@ pub(crate) fn router() -> Router {
         .layer(Extension(Arc::clone(&shared_repository)))
 }
 
-async fn get_todos(Extension(repository): Extension<SharedRepository>) -> impl IntoResponse {
+async fn get_todos(
+    Extension(repository): Extension<SharedRepository>,
+) -> Result<impl IntoResponse, StatusCode> {
     let todos = repository
         .read()
         .await
         .get_todos()
         .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .iter()
         .cloned()
         .map(models::Todo::from)
         .collect::<Vec<_>>();
 
-    Json(todos)
+    Ok(Json(todos))
 }
 
 async fn get_todo(
@@ -58,6 +61,7 @@ async fn get_todo(
         .await
         .get_todo(todo_id)
         .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .map(models::Todo::from)
         .ok_or(StatusCode::NOT_FOUND)?;
 
@@ -67,7 +71,7 @@ async fn get_todo(
 async fn add_todo(
     Extension(repository): Extension<SharedRepository>,
     Json(definition): Json<models::TodoDefinition>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, StatusCode> {
     let id = Uuid::new_v4().to_string();
 
     let todo = data::models::Todo {
@@ -78,9 +82,14 @@ async fn add_todo(
         completed_at: None,
     };
 
-    repository.write().await.add_todo(todo).await;
+    repository
+        .write()
+        .await
+        .add_todo(todo)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    Json(models::TodoReference { id })
+    Ok(Json(models::TodoReference { id }))
 }
 
 async fn update_todo(
@@ -93,6 +102,7 @@ async fn update_todo(
         .await
         .get_todo(todo_id)
         .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .ok_or(StatusCode::NOT_FOUND)?
         .clone();
 
@@ -100,7 +110,12 @@ async fn update_todo(
         todo = data::models::Todo { title, ..todo };
     }
 
-    repository.write().await.update_todo(todo).await;
+    repository
+        .write()
+        .await
+        .update_todo(todo)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(())
 }
@@ -114,6 +129,7 @@ async fn complete_todo(
         .await
         .get_todo(todo_id)
         .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .ok_or(StatusCode::NOT_FOUND)?
         .clone();
 
@@ -123,7 +139,12 @@ async fn complete_todo(
         ..todo
     };
 
-    repository.write().await.update_todo(todo).await;
+    repository
+        .write()
+        .await
+        .update_todo(todo)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(())
 }

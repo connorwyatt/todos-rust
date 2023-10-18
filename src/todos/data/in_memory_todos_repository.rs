@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use async_trait::async_trait;
 use tokio::sync::RwLock;
 
-use crate::todos::data::{models::Todo, todos_repository::TodosRepository};
+use crate::todos::data::{
+    models::Todo,
+    todos_repository::{RepositoryResult, TodosRepository},
+};
 
 #[derive(Default)]
 pub(crate) struct InMemoryTodosRepository {
@@ -12,29 +15,38 @@ pub(crate) struct InMemoryTodosRepository {
 
 #[async_trait]
 impl TodosRepository for InMemoryTodosRepository {
-    async fn get_todos(&self) -> Vec<Todo> {
-        self.todos
+    async fn get_todos(&self) -> RepositoryResult<Vec<Todo>> {
+        let todos = self
+            .todos
             .read()
             .await
             .values()
             .cloned()
-            .collect::<Vec<Todo>>()
+            .collect::<Vec<Todo>>();
+
+        Ok(todos)
     }
 
-    async fn get_todo(&self, todo_id: String) -> Option<Todo> {
-        self.todos.read().await.get(&todo_id).cloned()
+    async fn get_todo(&self, todo_id: String) -> RepositoryResult<Option<Todo>> {
+        let todo = self.todos.read().await.get(&todo_id).cloned();
+
+        Ok(todo)
     }
 
-    async fn add_todo(&mut self, todo: Todo) {
+    async fn add_todo(&mut self, todo: Todo) -> RepositoryResult {
         self.todos.write().await.insert(todo.id.clone(), todo);
+
+        Ok(())
     }
 
-    async fn update_todo(&mut self, todo: Todo) {
+    async fn update_todo(&mut self, todo: Todo) -> RepositoryResult {
         if !self.todos.read().await.contains_key(&todo.id) {
             panic!("cannot find Todo \"{}\" to update", todo.id);
         }
 
         self.todos.write().await.insert(todo.id.clone(), todo);
+
+        Ok(())
     }
 }
 
@@ -54,15 +66,17 @@ mod tests {
 
         let add_todo_future = repository.add_todo(todo.clone());
 
-        tokio_test::block_on(add_todo_future);
+        assert!(tokio_test::block_on(add_todo_future).is_ok());
 
         let get_todo_future = repository.get_todo(todo.id.clone());
 
         let fetched_todo_option = tokio_test::block_on(get_todo_future);
 
-        assert!(fetched_todo_option.is_some());
+        assert!(fetched_todo_option.clone().is_ok_and(|x| x.is_some()));
 
-        let fetched_todo = fetched_todo_option.expect("already asserted above");
+        let fetched_todo = fetched_todo_option
+            .expect("already asserted above")
+            .expect("already asserted above");
 
         assert_eq!(&fetched_todo.id, &todo.id);
         assert_eq!(&fetched_todo.title, &todo.title);
@@ -79,25 +93,27 @@ mod tests {
 
         let add_todo_future = repository.add_todo(todo.clone());
 
-        tokio_test::block_on(add_todo_future);
+        assert!(tokio_test::block_on(add_todo_future).is_ok());
 
         let update_todo_future = repository.update_todo(Todo {
             id: todo.id.clone(),
             title: String::from("Sweep the ceilings"),
-            added_at: todo.added_at.clone(),
-            is_complete: todo.is_complete.clone(),
-            completed_at: todo.completed_at.clone(),
+            added_at: todo.added_at,
+            is_complete: todo.is_complete,
+            completed_at: todo.completed_at,
         });
 
-        tokio_test::block_on(update_todo_future);
+        assert!(tokio_test::block_on(update_todo_future).is_ok());
 
         let get_todo_future = repository.get_todo(todo.id.clone());
 
         let fetched_todo_option = tokio_test::block_on(get_todo_future);
 
-        assert!(fetched_todo_option.is_some());
+        assert!(fetched_todo_option.clone().is_ok_and(|x| x.is_some()));
 
-        let fetched_todo = fetched_todo_option.expect("already asserted above");
+        let fetched_todo = fetched_todo_option
+            .expect("already asserted above")
+            .expect("already asserted above");
 
         assert_eq!(&fetched_todo.id, &todo.id);
         assert_eq!(&fetched_todo.title, &String::from("Sweep the ceilings"));
@@ -111,9 +127,9 @@ mod tests {
             Todo {
                 id: Uuid::new_v4().to_string(),
                 title: String::from("Clean my room"),
-                added_at: Utc.with_ymd_and_hms(2023, 01, 01, 12, 00, 00).unwrap(),
+                added_at: Utc.with_ymd_and_hms(2023, 1, 1, 12, 0, 0).unwrap(),
                 is_complete: true,
-                completed_at: Some(Utc.with_ymd_and_hms(2023, 01, 31, 12, 00, 00).unwrap()),
+                completed_at: Some(Utc.with_ymd_and_hms(2023, 1, 31, 12, 0, 0).unwrap()),
             }
         }
     }
