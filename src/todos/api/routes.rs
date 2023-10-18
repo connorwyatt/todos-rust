@@ -1,21 +1,26 @@
-use crate::todos::{
-    api::models::{self, TodoPatch},
-    data::{
-        self, in_memory_todos_repository::InMemoryTodosRepository,
-        todos_repository::TodosRepository,
-    },
-};
+use std::sync::Arc;
+
 use axum::{
     extract::Path,
     http::StatusCode,
     response::IntoResponse,
     routing::{get, post},
-    Extension, Json, Router,
+    Extension,
+    Json,
+    Router,
 };
 use chrono::Utc;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
+
+use crate::todos::{
+    api::models::{self, TodoPatch},
+    data::{
+        self,
+        in_memory_todos_repository::InMemoryTodosRepository,
+        todos_repository::TodosRepository,
+    },
+};
 
 type SharedRepository = Arc<RwLock<dyn TodosRepository + Send + Sync>>;
 

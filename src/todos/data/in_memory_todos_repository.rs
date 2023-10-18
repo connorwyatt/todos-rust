@@ -1,7 +1,9 @@
-use crate::todos::data::{models::Todo, todos_repository::TodosRepository};
-use async_trait::async_trait;
 use std::collections::HashMap;
+
+use async_trait::async_trait;
 use tokio::sync::RwLock;
+
+use crate::todos::data::{models::Todo, todos_repository::TodosRepository};
 
 #[derive(Default)]
 pub(crate) struct InMemoryTodosRepository {
@@ -38,10 +40,11 @@ impl TodosRepository for InMemoryTodosRepository {
 
 #[cfg(test)]
 mod tests {
-    use super::InMemoryTodosRepository;
-    use crate::todos::data::{models::Todo, todos_repository::TodosRepository};
     use chrono::{TimeZone, Utc};
     use uuid::Uuid;
+
+    use super::InMemoryTodosRepository;
+    use crate::todos::data::{models::Todo, todos_repository::TodosRepository};
 
     #[test]
     fn todos_can_be_added_and_retrieve() {
