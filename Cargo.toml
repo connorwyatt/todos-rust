@@ -12,4 +12,8 @@ chrono = { version = "0.4.31", features = ["serde", "clock"] }
 serde = { version = "1.0.189", features = ["derive"] }
 tokio = { version = "1.33.0", features = ["full"] }
 tokio-test = "0.4.3"
+tower = { version = "0.4.13", features = ["util", "filter"] }
+tower-http = { version = "0.4.4", features = ["compression-gzip", "map-response-body", "request-id", "timeout", "trace", "util", "validate-request"] }
+tracing = "0.1.39"
+tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 uuid = { version = "1.4.1", features = ["serde", "v4"] }
