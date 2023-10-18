@@ -1,35 +1,36 @@
-use std::sync::Arc;
-
 use crate::todos::{
-    api::models,
-    data::{self, in_memory_todos_repository::InMemoryTodosRepository},
+    api::models::{self, TodoPatch},
+    data::{
+        self, in_memory_todos_repository::InMemoryTodosRepository,
+        todos_repository::TodosRepository,
+    },
 };
 use axum::{
-    extract::{Path, State},
+    extract::Path,
     http::StatusCode,
     response::IntoResponse,
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use chrono::Utc;
+use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-use super::models::TodoPatch;
-
-type SharedRepository = Arc<RwLock<InMemoryTodosRepository>>;
+type SharedRepository = Arc<RwLock<dyn TodosRepository + Send + Sync>>;
 
 pub(crate) fn router() -> Router {
-    let shared_repository = SharedRepository::default();
+    let shared_repository: SharedRepository =
+        Arc::new(RwLock::new(InMemoryTodosRepository::default()));
 
     Router::new()
         .route("/todos", get(get_todos).post(add_todo))
         .route("/todos/:todo_id", get(get_todo).patch(update_todo))
         .route("/todos/:todo_id/actions/complete", post(complete_todo))
-        .with_state(Arc::clone(&shared_repository))
+        .layer(Extension(Arc::clone(&shared_repository)))
 }
 
-async fn get_todos(State(repository): State<SharedRepository>) -> impl IntoResponse {
+async fn get_todos(Extension(repository): Extension<SharedRepository>) -> impl IntoResponse {
     let todos = repository
         .read()
         .await
@@ -44,7 +45,7 @@ async fn get_todos(State(repository): State<SharedRepository>) -> impl IntoRespo
 }
 
 async fn get_todo(
-    State(repository): State<SharedRepository>,
+    Extension(repository): Extension<SharedRepository>,
     Path(todo_id): Path<String>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let todo = repository
@@ -59,7 +60,7 @@ async fn get_todo(
 }
 
 async fn add_todo(
-    State(repository): State<SharedRepository>,
+    Extension(repository): Extension<SharedRepository>,
     Json(definition): Json<models::TodoDefinition>,
 ) -> impl IntoResponse {
     let id = Uuid::new_v4().to_string();
@@ -78,7 +79,7 @@ async fn add_todo(
 }
 
 async fn update_todo(
-    State(repository): State<SharedRepository>,
+    Extension(repository): Extension<SharedRepository>,
     Path(todo_id): Path<String>,
     Json(patch): Json<TodoPatch>,
 ) -> Result<impl IntoResponse, StatusCode> {
@@ -100,7 +101,7 @@ async fn update_todo(
 }
 
 async fn complete_todo(
-    State(repository): State<SharedRepository>,
+    Extension(repository): Extension<SharedRepository>,
     Path(todo_id): Path<String>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let mut todo = repository

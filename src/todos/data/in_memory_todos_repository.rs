@@ -1,44 +1,45 @@
-use crate::todos::data::models::Todo;
+use crate::todos::data::{models::Todo, todos_repository::TodosRepository};
+use async_trait::async_trait;
 use std::collections::HashMap;
+use tokio::sync::RwLock;
 
+#[derive(Default)]
 pub(crate) struct InMemoryTodosRepository {
-    todos: HashMap<String, Todo>,
+    todos: RwLock<HashMap<String, Todo>>,
 }
 
-impl Default for InMemoryTodosRepository {
-    fn default() -> Self {
-        Self {
-            todos: HashMap::new(),
-        }
-    }
-}
-
-impl InMemoryTodosRepository {
-    pub(crate) async fn get_todos(&self) -> Vec<Todo> {
-        self.todos.values().cloned().collect::<Vec<Todo>>()
+#[async_trait]
+impl TodosRepository for InMemoryTodosRepository {
+    async fn get_todos(&self) -> Vec<Todo> {
+        self.todos
+            .read()
+            .await
+            .values()
+            .cloned()
+            .collect::<Vec<Todo>>()
     }
 
-    pub(crate) async fn get_todo(&self, todo_id: String) -> Option<Todo> {
-        self.todos.get(&todo_id).cloned()
+    async fn get_todo(&self, todo_id: String) -> Option<Todo> {
+        self.todos.read().await.get(&todo_id).cloned()
     }
 
-    pub(crate) async fn add_todo(&mut self, todo: Todo) {
-        self.todos.insert(todo.id.clone(), todo);
+    async fn add_todo(&mut self, todo: Todo) {
+        self.todos.write().await.insert(todo.id.clone(), todo);
     }
 
-    pub(crate) async fn update_todo(&mut self, todo: Todo) {
-        if !self.todos.contains_key(&todo.id) {
+    async fn update_todo(&mut self, todo: Todo) {
+        if !self.todos.read().await.contains_key(&todo.id) {
             panic!("cannot find Todo \"{}\" to update", todo.id);
         }
 
-        self.todos.insert(todo.id.clone(), todo);
+        self.todos.write().await.insert(todo.id.clone(), todo);
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::InMemoryTodosRepository;
-    use crate::todos::data::models::Todo;
+    use crate::todos::data::{models::Todo, todos_repository::TodosRepository};
     use chrono::{TimeZone, Utc};
     use uuid::Uuid;
 
