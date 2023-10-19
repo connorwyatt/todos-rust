@@ -72,19 +72,17 @@ mod tests {
     use super::InMemoryTodosRepository;
     use crate::todos::data::{models::Todo, todos_repository::TodosRepository};
 
-    #[test]
-    fn todos_can_be_added_and_retrieve() {
+    #[tokio::test]
+    async fn todos_can_be_added_and_retrieve() {
         let mut repository = InMemoryTodosRepository::default();
 
         let todo = Todo::default();
 
-        let add_todo_future = repository.add_todo(todo.clone());
+        let add_todo_result = repository.add_todo(todo.clone()).await;
 
-        assert!(tokio_test::block_on(add_todo_future).is_ok());
+        assert!(add_todo_result.is_ok());
 
-        let get_todo_future = repository.get_todo(todo.id.clone());
-
-        let fetched_todo_option = tokio_test::block_on(get_todo_future);
+        let fetched_todo_option = repository.get_todo(todo.id.clone()).await;
 
         assert!(fetched_todo_option.clone().is_ok_and(|x| x.is_some()));
 
@@ -99,33 +97,33 @@ mod tests {
         assert_eq!(&fetched_todo.completed_at, &todo.completed_at);
     }
 
-    #[test]
-    fn todos_can_be_updated() {
+    #[tokio::test]
+    async fn todos_can_be_updated() {
         let mut repository = InMemoryTodosRepository::default();
 
         let todo = Todo::default();
 
-        let add_todo_future = repository.add_todo(todo.clone());
+        let add_todo_result = repository.add_todo(todo.clone()).await;
 
-        assert!(tokio_test::block_on(add_todo_future).is_ok());
+        assert!(add_todo_result.is_ok());
 
-        let update_todo_future = repository.update_todo(Todo {
-            id: todo.id.clone(),
-            title: String::from("Sweep the ceilings"),
-            added_at: todo.added_at,
-            is_complete: todo.is_complete,
-            completed_at: todo.completed_at,
-        });
+        let update_todo_result = repository
+            .update_todo(Todo {
+                id: todo.id.clone(),
+                title: String::from("Sweep the ceilings"),
+                added_at: todo.added_at,
+                is_complete: todo.is_complete,
+                completed_at: todo.completed_at,
+            })
+            .await;
 
-        assert!(tokio_test::block_on(update_todo_future).is_ok());
+        assert!(update_todo_result.is_ok());
 
-        let get_todo_future = repository.get_todo(todo.id.clone());
+        let fetched_todo_result = repository.get_todo(todo.id.clone()).await;
 
-        let fetched_todo_option = tokio_test::block_on(get_todo_future);
+        assert!(fetched_todo_result.clone().is_ok_and(|x| x.is_some()));
 
-        assert!(fetched_todo_option.clone().is_ok_and(|x| x.is_some()));
-
-        let fetched_todo = fetched_todo_option
+        let fetched_todo = fetched_todo_result
             .expect("already asserted above")
             .expect("already asserted above");
 
