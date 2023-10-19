@@ -1,7 +1,11 @@
+pub(crate) mod latency;
 pub(crate) mod middleware;
 pub(crate) mod todos;
 
-use std::{net::SocketAddr, time::Duration};
+use std::{
+    net::SocketAddr,
+    time::{Duration, Instant},
+};
 
 use axum::Router;
 use tower::ServiceBuilder;
@@ -14,14 +18,19 @@ use tower_http::{
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::middleware::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse};
+use crate::{
+    latency::Latency,
+    middleware::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse},
+};
 
 #[tokio::main]
 async fn main() {
+    let start = Instant::now();
+
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "todos=debug,tower_http=debug".into()),
+                .unwrap_or_else(|_| "todos=debug".into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
@@ -46,6 +55,10 @@ async fn main() {
 
     let server = axum::Server::bind(&SocketAddr::from(([127, 0, 0, 1], 3000)))
         .serve(app.into_make_service());
-    tracing::debug!("listening on {}", server.local_addr());
+    tracing::debug!(
+        "listening on {}, started in {}",
+        server.local_addr(),
+        Latency::new(start.elapsed())
+    );
     server.await.unwrap();
 }

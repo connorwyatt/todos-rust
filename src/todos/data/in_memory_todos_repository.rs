@@ -24,17 +24,26 @@ impl TodosRepository for InMemoryTodosRepository {
             .cloned()
             .collect::<Vec<Todo>>();
 
+        tracing::debug!("fetched Todos");
+
         Ok(todos)
     }
 
     async fn get_todo(&self, todo_id: String) -> RepositoryResult<Option<Todo>> {
         let todo = self.todos.read().await.get(&todo_id).cloned();
 
+        tracing::debug!(todo_id = %&todo_id, "fetched Todo");
+
         Ok(todo)
     }
 
     async fn add_todo(&mut self, todo: Todo) -> RepositoryResult {
-        self.todos.write().await.insert(todo.id.clone(), todo);
+        self.todos
+            .write()
+            .await
+            .insert(todo.id.clone(), todo.clone());
+
+        tracing::debug!(todo_id = %&todo.id, "inserted Todo");
 
         Ok(())
     }
@@ -44,7 +53,12 @@ impl TodosRepository for InMemoryTodosRepository {
             panic!("cannot find Todo \"{}\" to update", todo.id);
         }
 
-        self.todos.write().await.insert(todo.id.clone(), todo);
+        self.todos
+            .write()
+            .await
+            .insert(todo.id.clone(), todo.clone());
+
+        tracing::debug!(todo_id = %&todo.id, "updated Todo");
 
         Ok(())
     }
