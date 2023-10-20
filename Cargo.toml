@@ -9,7 +9,9 @@ edition = "2021"
 async-trait = "0.1.74"
 axum = "0.6.20"
 chrono = { version = "0.4.31", features = ["serde", "clock"] }
+dotenvy = "0.15.7"
 serde = { version = "1.0.189", features = ["derive"] }
+sqlx = { version = "0.7.2", features = ["chrono", "migrate", "postgres", "runtime-tokio", "tls-rustls"] }
 tokio = { version = "1.33.0", features = ["full"] }
 tokio-test = "0.4.3"
 tower = { version = "0.4.13", features = ["util", "filter"] }

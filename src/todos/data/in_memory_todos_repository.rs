@@ -37,7 +37,7 @@ impl TodosRepository for InMemoryTodosRepository {
         Ok(todo)
     }
 
-    async fn add_todo(&mut self, todo: Todo) -> RepositoryResult {
+    async fn add_todo(&self, todo: Todo) -> RepositoryResult {
         self.todos
             .write()
             .await
@@ -48,7 +48,7 @@ impl TodosRepository for InMemoryTodosRepository {
         Ok(())
     }
 
-    async fn update_todo(&mut self, todo: Todo) -> RepositoryResult {
+    async fn update_todo(&self, todo: Todo) -> RepositoryResult {
         if !self.todos.read().await.contains_key(&todo.id) {
             panic!("cannot find Todo \"{}\" to update", todo.id);
         }

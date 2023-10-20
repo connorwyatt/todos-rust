@@ -10,37 +10,26 @@ use axum::{
     Router,
 };
 use chrono::Utc;
-use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use crate::todos::{
     api::models::{self, TodoPatch},
-    data::{
-        self,
-        in_memory_todos_repository::InMemoryTodosRepository,
-        todos_repository::TodosRepository,
-    },
+    data::{self, todos_repository::TodosRepository},
 };
 
-type SharedRepository = Arc<RwLock<dyn TodosRepository + Send + Sync>>;
+type TodosRepositoryExtension = Arc<dyn TodosRepository>;
 
 pub(crate) fn router() -> Router {
-    let shared_repository: SharedRepository =
-        Arc::new(RwLock::new(InMemoryTodosRepository::default()));
-
     Router::new()
         .route("/todos", get(get_todos).post(add_todo))
         .route("/todos/:todo_id", get(get_todo).patch(update_todo))
         .route("/todos/:todo_id/actions/complete", post(complete_todo))
-        .layer(Extension(Arc::clone(&shared_repository)))
 }
 
 async fn get_todos(
-    Extension(repository): Extension<SharedRepository>,
+    Extension(repository): Extension<TodosRepositoryExtension>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let todos = repository
-        .read()
-        .await
         .get_todos()
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
@@ -53,12 +42,10 @@ async fn get_todos(
 }
 
 async fn get_todo(
-    Extension(repository): Extension<SharedRepository>,
+    Extension(repository): Extension<TodosRepositoryExtension>,
     Path(todo_id): Path<String>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let todo = repository
-        .read()
-        .await
         .get_todo(todo_id)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
@@ -69,7 +56,7 @@ async fn get_todo(
 }
 
 async fn add_todo(
-    Extension(repository): Extension<SharedRepository>,
+    Extension(repository): Extension<TodosRepositoryExtension>,
     Json(definition): Json<models::TodoDefinition>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let id = Uuid::new_v4().to_string();
@@ -83,8 +70,6 @@ async fn add_todo(
     };
 
     repository
-        .write()
-        .await
         .add_todo(todo)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -93,13 +78,11 @@ async fn add_todo(
 }
 
 async fn update_todo(
-    Extension(repository): Extension<SharedRepository>,
+    Extension(repository): Extension<TodosRepositoryExtension>,
     Path(todo_id): Path<String>,
     Json(patch): Json<TodoPatch>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let mut todo = repository
-        .read()
-        .await
         .get_todo(todo_id)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
@@ -111,8 +94,6 @@ async fn update_todo(
     }
 
     repository
-        .write()
-        .await
         .update_todo(todo)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -121,12 +102,10 @@ async fn update_todo(
 }
 
 async fn complete_todo(
-    Extension(repository): Extension<SharedRepository>,
+    Extension(repository): Extension<TodosRepositoryExtension>,
     Path(todo_id): Path<String>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let mut todo = repository
-        .read()
-        .await
         .get_todo(todo_id)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
@@ -140,8 +119,6 @@ async fn complete_todo(
     };
 
     repository
-        .write()
-        .await
         .update_todo(todo)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
