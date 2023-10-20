@@ -54,7 +54,6 @@ async fn main() {
         )
         .layer(TimeoutLayer::new(Duration::from_secs(30)))
         .propagate_x_request_id()
-        .map_response_body(axum::body::boxed)
         .layer(ValidateRequestHeaderLayer::accept("application/json"))
         .compression();
 
