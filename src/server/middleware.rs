@@ -4,7 +4,7 @@ use axum::http::{Request, Response};
 use tower_http::trace::{MakeSpan, OnRequest, OnResponse};
 use tracing::Span;
 
-use crate::latency::Latency;
+use crate::server::latency::Latency;
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct DefaultMakeSpan {}
