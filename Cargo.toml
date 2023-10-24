@@ -3,20 +3,17 @@ name = "todos"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 async-trait = "0.1.74"
 axum = "0.6.20"
 chrono = { version = "0.4.31", features = ["serde", "clock"] }
 dotenvy = "0.15.7"
 serde = { version = "1.0.189", features = ["derive"] }
+server = { git = "https://github.com/connorwyatt/rust-server-lib.git", package = "server", rev = "d063d326" }
 sqlx = { version = "0.7.2", features = ["chrono", "migrate", "postgres", "runtime-tokio", "tls-rustls"] }
 tokio = { version = "1.33.0", features = ["full"] }
 tokio-test = "0.4.3"
-tower = { version = "0.4.13", features = ["util", "filter"] }
-tower-http = { version = "0.4.4", features = ["compression-gzip", "map-response-body", "request-id", "timeout", "trace", "util", "validate-request"] }
-tracing = "0.1.39"
+tracing = "0.1.40"
 tracing-appender = "0.2.2"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter", "json"] }
-uuid = { version = "1.4.1", features = ["serde", "v4"] }
+uuid = { version = "1.5.0", features = ["serde", "v4"] }
