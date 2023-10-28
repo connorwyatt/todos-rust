@@ -4,7 +4,10 @@ use axum::{
     extract::Path,
     http::StatusCode,
     response::IntoResponse,
-    routing::{get, post},
+    routing::{
+        get,
+        post,
+    },
     Extension,
     Json,
     Router,
@@ -13,8 +16,14 @@ use chrono::Utc;
 use uuid::Uuid;
 
 use crate::todos::{
-    api::models::{self, TodoPatch},
-    data::{self, todos_repository::TodosRepository},
+    api::models::{
+        self,
+        TodoPatch,
+    },
+    data::{
+        self,
+        todos_repository::TodosRepository,
+    },
 };
 
 type TodosRepositoryExtension = Arc<dyn TodosRepository>;

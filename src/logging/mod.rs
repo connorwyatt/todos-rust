@@ -1,4 +1,7 @@
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{
+    layer::SubscriberExt,
+    util::SubscriberInitExt,
+};
 
 pub(crate) fn initialize_logging() {
     let file_appender = tracing_appender::rolling::hourly("logs", "logs");

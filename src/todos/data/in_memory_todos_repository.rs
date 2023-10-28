@@ -5,7 +5,10 @@ use tokio::sync::RwLock;
 
 use crate::todos::data::{
     models::Todo,
-    todos_repository::{RepositoryResult, TodosRepository},
+    todos_repository::{
+        RepositoryResult,
+        TodosRepository,
+    },
 };
 
 #[derive(Default)]
@@ -66,15 +69,21 @@ impl TodosRepository for InMemoryTodosRepository {
 
 #[cfg(test)]
 mod tests {
-    use chrono::{TimeZone, Utc};
+    use chrono::{
+        TimeZone,
+        Utc,
+    };
     use uuid::Uuid;
 
     use super::InMemoryTodosRepository;
-    use crate::todos::data::{models::Todo, todos_repository::TodosRepository};
+    use crate::todos::data::{
+        models::Todo,
+        todos_repository::TodosRepository,
+    };
 
     #[tokio::test]
     async fn todos_can_be_added_and_retrieve() {
-        let mut repository = InMemoryTodosRepository::default();
+        let repository = InMemoryTodosRepository::default();
 
         let todo = Todo::default();
 
@@ -99,7 +108,7 @@ mod tests {
 
     #[tokio::test]
     async fn todos_can_be_updated() {
-        let mut repository = InMemoryTodosRepository::default();
+        let repository = InMemoryTodosRepository::default();
 
         let todo = Todo::default();
 

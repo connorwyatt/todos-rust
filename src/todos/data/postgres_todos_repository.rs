@@ -1,12 +1,21 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
-use sqlx::{Pool, Postgres};
+use chrono::{
+    DateTime,
+    Utc,
+};
+use sqlx::{
+    Pool,
+    Postgres,
+};
 
 use crate::todos::data::{
     models::Todo,
-    todos_repository::{RepositoryResult, TodosRepository},
+    todos_repository::{
+        RepositoryResult,
+        TodosRepository,
+    },
 };
 
 #[derive(Clone, sqlx::FromRow)]

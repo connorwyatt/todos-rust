@@ -1,7 +1,14 @@
 use std::sync::Arc;
 
-use axum::{Extension, Router};
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use axum::{
+    Extension,
+    Router,
+};
+use sqlx::{
+    postgres::PgPoolOptions,
+    Pool,
+    Postgres,
+};
 
 use crate::todos::data::{
     in_memory_todos_repository::InMemoryTodosRepository,
